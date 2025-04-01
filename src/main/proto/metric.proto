@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package vscheck.metrics;
+
+option java_package = "ru.vscheck.proto.metrics";
+option java_multiple_files = true;
+
+//
+// Тип цели проверки
+//
+enum TargetType {
+  UNKNOWN_TARGET = 0; // не указано явно
+  DOMAIN = 1;         // домен — example.com
+  IP = 2;             // IP-адрес — 8.8.8.8
+  URL = 3;            // полный URL — https://example.com/status
+}
+
+//
+// Тип метрики (что именно проверяется)
+//
+enum MetricType {
+  UNKNOWN = 0;
+
+  ICMP_PING = 1;         // ICMP ping (проверка доступности IP)
+  TCP_PORT = 2;          // TCP порт (открыт/не открыт)
+  DNS_RESOLVE = 3;       // DNS-резолвинг (домен -> IP)
+
+  HTTP = 4;              // HTTP-проверка (включает статус, доступность, заголовки и т.д.)
+
+  SSL_EXPIRY = 8;        // Проверка срока действия SSL-сертификата
+  DOMAIN_EXPIRY = 9;     // Проверка срока действия домена
+  WHOIS_CHECK = 10;      // Получение WHOIS-информации о домене
+}
+
+//
+// Результат выполнения одной метрики
+//
+message Metric {
+  string check_id = 1;             // ID задания, для трассировки и логов
+  string target = 2;               // что именно проверяли (домен, IP, URL)
+  TargetType target_type = 3;      // тип цели
+  MetricType metric_type = 4;      // тип метрики
+
+  int64 timestamp = 5;             // время выполнения (Unix-время в миллисекундах)
+  string location = 6;             // геолокация проверки (например: "ru-msk")
+
+  // Статус выполнения
+  bool success = 7;                // удалось ли выполнить проверку (true = проверка завершилась)
+  string failure_reason = 8;       // короткий код ошибки (например: "timeout", "ssl_error")
+  string message = 9;              // подробное сообщение об ошибке (для UI/логов)
+
+  // Время выполнения
+  int64 response_time_ms = 10;     // сколько заняла проверка, в мс
+  int32 timeout_ms = 11;           // максимальный таймаут, установленный для проверки
+
+  // TCP / ICMP / DNS
+  bool port_open = 12;             // TCP порт открыт? (true/false)
+  bool icmp_reachable = 13;        // удалось ли "пропинговать" IP (ICMP echo)
+  bool dns_resolved = 14;          // удалось ли резолвить домен в IP
+
+  // HTTP-метрики (при использовании HTTP_METRIC)
+  bool http_available = 15;        // отвечает ли сайт вообще (любой код, даже 503)
+  int32 http_status = 16;          // HTTP-код ответа (200, 404, 500 и т.д.)
+  bool keyword_found = 17;         // найдено ли ключевое слово в теле ответа
+  map<string, string> headers = 18;// заголовки ответа (если есть)
+
+  // SSL / домены
+  int32 ssl_days_left = 19;        // сколько дней до окончания SSL-сертификата
+  bool cert_valid = 20;            // корректен ли сертификат (цепочка, CA и пр.)
+  int32 domain_days_left = 21;     // сколько дней до окончания домена
+  string whois_expiry_date = 22;   // дата окончания домена (в формате ISO: "2025-09-01")
+
+  // Резерв — дополнительные данные в свободной форме (удобно для отладки и расширений)
+  map<string, string> extra = 100;
+}
+
+//
+// Пакет метрик (например, от одного мониторинга за раз)
+//
+message MetricBatch {
+  repeated Metric metrics = 1; // несколько метрик в одном сообщении
+}

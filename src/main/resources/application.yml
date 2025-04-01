@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: vscheck-monitor
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+logging:
+  org.springframework.web: DEBUG
+vscheck:
+  rabbit:
+    queues:
+      request: test
+      result: test2
+  retry:
+    max-attmpts: 3
+http:
+  client:
+    timeout-ms: 5000

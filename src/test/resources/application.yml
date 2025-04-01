@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: vscheck-monitor
+vscheck:
+  rabbit:
+    queues:
+      request: test
+      result: test2
+http:
+  client:
+    timeout-ms: 5000

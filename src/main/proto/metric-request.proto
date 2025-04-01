@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package vscheck.request;
+
+option java_package = "ru.vscheck.proto.request";
+option java_multiple_files = true;
+
+import "metric.proto"; // для TargetType и MetricType
+
+message MetricRequest {
+  string check_id = 1;                    // ID задания
+  string target = 2;                      // что проверять (URL, IP, домен)
+  vscheck.metrics.TargetType target_type = 3;
+  vscheck.metrics.MetricType metric_type = 4;
+
+  string location = 5;                       // регион/локация агента
+  int32 timeout_ms = 6;                      // таймаут в миллисекундах
+
+  // Специфические параметры по типу проверки
+  string expected_keyword = 10;              // для HTTP_KEYWORD
+  map<string, string> expected_headers = 11; // для HTTP_HEADERS
+  int32 port = 12;                           // для TCP_PORT
+}
